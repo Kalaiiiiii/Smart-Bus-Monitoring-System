@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Monitoring System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="busstyle.css"/>
+
+    <!-- Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Firebase v8 (Correct version for your code) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold text-center mb-4">Bus Monitoring System</h1>
+        
+        <!-- Route Selection -->
+        <label for="routeSelect" class="block font-semibold">Select a Route:</label>
+        <select id="routeSelect" class="w-full p-2 border rounded mb-4">
+            <option value="">-- Choose a Route --</option>
+        </select>
+        
+        <!-- Bus List -->
+        <label for="busSelect" class="block font-semibold">Available Buses:</label>
+        <select id="busSelect" class="w-full p-2 border rounded mb-4" disabled>
+            <option value="">-- Select a Bus --</option>
+        </select>
+        
+        <!-- Bus Details -->
+        <div id="busDetails" class="hidden p-4 bg-gray-200 rounded-lg">
+            <p><strong>Seating Capacity:</strong> <span id="capacity"></span></p>
+            <p><strong>Current Passengers:</strong> <span id="passengers"></span></p>
+        </div>
+        
+        <!-- Live Map -->
+        <div id="map" class="hidden w-full h-64 mt-4 rounded-lg"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const routeSelect = document.getElementById("routeSelect");
+            const busSelect = document.getElementById("busSelect");
+            const busDetails = document.getElementById("busDetails");
+            const capacityEl = document.getElementById("capacity");
+            const passengersEl = document.getElementById("passengers");
+            const mapDiv = document.getElementById("map");
+            let map, marker;
+
+            // Sample route and bus data (to be replaced with dynamic data fetching)
+            const routes = {
+    "Thripunithura - Aluva": [
+        { id: "bus101", name: "Greenline Express", capacity: 40 },
+        { id: "bus102", name: "SmartRide 2", capacity: 38 }
+    ],
+    "Edapally - Kakkanad": [
+        { id: "bus201", name: "BlueBird", capacity: 35 }
+    ]
+};
+
+
+            // Populate route options
+            Object.keys(routes).forEach(route => {
+                const option = document.createElement("option");
+                option.value = route;
+                option.textContent = route;
+                routeSelect.appendChild(option);
+            });
+
+            routeSelect.addEventListener("change", () => {
+                busSelect.innerHTML = "<option value=''>-- Select a Bus --</option>";
+                busSelect.disabled = !routeSelect.value;
+
+                if (routeSelect.value) {
+                    routes[routeSelect.value].forEach(bus => {
+                        const option = document.createElement("option");
+                        option.value = bus.id;
+                        option.textContent = bus.name;
+                        busSelect.appendChild(option);
+                    });
+                }
+            });
+
+            busSelect.addEventListener("change", () => {
+                if (busSelect.value) {
+                    const selectedRoute = routeSelect.value;
+                    const selectedBus = routes[selectedRoute].find(bus => bus.id === busSelect.value);
+
+                    capacityEl.textContent = selectedBus.capacity;
+                    busDetails.classList.remove("hidden");
+                    mapDiv.classList.remove("hidden");
+
+                    // Initialize the map if not already done
+                    if (!map) {
+                        map = L.map("map").setView([10, 76], 12); // Default location
+                        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+                        marker = L.marker([10, 76]).addTo(map);
+                    }
+
+                    // Start listening to Firebase updates
+                    listenForBusUpdates(busSelect.value);
+                }
+            });
+
+            // Firebase Configuration
+            const firebaseConfig = {
+                apiKey: "your_credential",
+                authDomain: "your_credential",
+                databaseURL: "your_credential",
+                projectId: "your_credential",
+                storageBucket: "your_credential",
+                messagingSenderId: "your_credential",
+                appId: "your_credential"
+            };
+
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+
+            // Function to listen for live updates from Firebase
+            function listenForBusUpdates(busId) {
+                database.ref(`/buses/${busId}`).on("value", (snapshot) => {
+                    if (snapshot.exists()) {
+                        let data = snapshot.val();
+                        let latitude = data.location.latitude;
+                        let longitude = data.location.longitude;
+                        let passengers = data.passengers;
+
+                        console.log(`Updated Location: ${latitude}, ${longitude}`);
+                        console.log(`Passengers: ${passengers}`);
+
+                        // Update the UI
+                        passengersEl.textContent = passengers;
+
+                        // Update the map marker
+                        updateMap(latitude, longitude);
+                    } else {
+                        console.log("No location data available");
+                    }
+                });
+            }
+
+            // Function to update the map with new location
+            function updateMap(lat, lon) {
+                if (marker) {
+                    marker.setLatLng([lat, lon]);
+                } else {
+                    marker = L.marker([lat, lon]).addTo(map);
+                }
+                map.setView([lat, lon], 15); // Center the map on the new location
+            }
+        });
+    </script>
+
+</body>
+</html>
