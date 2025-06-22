@@ -27,16 +27,15 @@ int sensor1 = D5;  // Sensor 1
 int sensor2 = D6;  // Sensor 2
 
 // WiFi Credentials
-#define WIFI_SSID "find me if you can"
-#define WIFI_PASSWORD "uppercaseLOWERCASE"
+#define WIFI_SSID "your_wifi_name"
+#define WIFI_PASSWORD "your_wifi_password"
 
 // Firebase Credentials
-#define FIREBASE_HOST "https://busmonitoring-524f7-default-rtdb.asia-southeast1.firebasedatabase.app"
-#define FIREBASE_API_KEY "AIzaSyBiUuMApGaFEN9E-GQbbfl98Ifm2Sr0nrU"
-#define FIREBASE_AUTH "QPYu9yJrONck5rvPAycw9LBTEvuhtiGRFyYoYu1l"
+#define FIREBASE_HOST "your_credential_1"
+#define FIREBASE_API_KEY "your_credential_2"
+#define FIREBASE_AUTH "your_credential_3"
 
 // Initialize components
-//LiquidCrystal lcd( d4, d5, d6, d7); //rs,en,
 SoftwareSerial gpsSerial(RXPin, TXPin);
 TinyGPSPlus gps;
 
@@ -170,12 +169,9 @@ void loop() {
 
 void sendDummyBusData() {
   if (Firebase.ready()) {
-    // SMART RIDE 2 - bus102
     Firebase.setFloat(firebaseData, "/buses/bus102/location/latitude", 10.030657);
     Firebase.setFloat(firebaseData, "/buses/bus102/location/longitude", 76.336030);
     Firebase.setInt(firebaseData, "/buses/bus102/passengers", 44);
-    
-    // BLUE BIRD - bus201
     Firebase.setFloat(firebaseData, "/buses/bus201/location/latitude",10.018991);
     Firebase.setFloat(firebaseData, "/buses/bus201/location/longitude", 76.343589);
     Firebase.setInt(firebaseData, "/buses/bus201/passengers", 14);
